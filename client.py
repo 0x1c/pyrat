@@ -140,22 +140,21 @@ def upload(path_file):
     info = (path_file, octets)
     soc.send(info)
     num = 0
-    while True:
-        octets = octets * 1024
-        file = open(path_file, "rb") #open file in read only and binary mod
-        if octets > 1024:
-            if (octets / 1024) != 0:
-                octets = round(octets / 1024 + 1)
-            else:
-                octets = octets / 1024
-            for i in range(octets):
-                file.seek(num, 0)
-                donnees = file.read(1024)
-                soc.send(encrypt(key, donnees))
-                num += 1024
+    octets = octets * 1024
+    file = open(path_file, "rb") #open file in read only and binary mod
+    if octets > 1024:
+        if (octets / 1024) != 0:
+            octets = round(octets / 1024 + 1)
         else:
-            donnees = file.read()
-            soc.send(donnees)
+            octets = octets / 1024
+        for i in range(octets):
+            file.seek(num, 0)
+            donnees = file.read(1024)
+            soc.send(encrypt(key, donnees))
+            num += 1024
+    else:
+        donnees = file.read()
+        soc.send(donnees)
     file.close
     soc.send(encrypt(key, "Upload finished"))
 
