@@ -93,14 +93,17 @@ class Client():
     def execute(self):
         self.connection.send(encrypt(key, "execute"))
         ctn = True
-        print("Use 'Exit' command to close terminal")
+        print("Use 'exit' command to close terminal")
         while ctn:
-            cmd = input("...")
+            cmd = input("... ")
+            if cmd == "exit":
+                print("Terminal closed")
+                self.connection.send(encrypt(key, "exit"))
+                ctn = False
+                break
             self.connection.send(encrypt(key, cmd))
             out = decrypt(key, self.connection.recv(4096))
-            if out == "exit":
-                ctn = False
-                print("Terminal closed")
+            out = out.decode("utf-8", "ignore")
             print(out)
             
     def uninstall(self):

