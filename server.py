@@ -119,12 +119,12 @@ class Client():
         ctn = True
         i = 1
         received = ""
-        received = soc.recv(4096)
+        received = self.connection.recv(4096)
         #received = decrypt(key, received)
         #name_file = received[0].split(\) #only for a file from windows|for file from linux used .split(/) #pk [-1]? plutot [0] non?
         size = received[1]
         while ctn:
-            received = soc.recb(4096)
+            received = self.connection.recb(4096)
             i += 1
             if received == b"Upload finished":
                 i = 0
@@ -155,10 +155,10 @@ class Client():
             print("File does not exist!")
             do = False
         if do:
-            soc.send(encrypt(key, "download"))
+            self.connection.send(encrypt(key, "download"))
             octets = os.path.getsize(path_file) / 1024
             info = (path_to_past, octets)
-            soc.send(encrypt(key, info))
+            self.connection.send(encrypt(key, info))
             num = 0
             octets = octets * 1024
             file = open(path_file, "rb") #open file in read only and binary mod
@@ -170,13 +170,13 @@ class Client():
                 for i in range(octets):
                     file.seek(num, 0)
                     donnees = file.read(1024)
-                    soc.send(encrypt(key, donnees))
+                    self.connection.send(encrypt(key, donnees))
                     num += 1024
             else:
                 donnees = file.read()
-                soc.send(donnees)
+                self.connection.send(donnees)
             file.close
-            soc.send(encrypt(key, "Upload finished"))
+            self.connection.send(encrypt(key, "Upload finished"))
 
         
         
@@ -253,4 +253,4 @@ def main():
     #server.join()
 
 if __name__ == "__main__":
-	main()
+    main()
