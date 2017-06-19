@@ -37,6 +37,8 @@ upload <Path_file> <Path_to_past>       - Upload a file to client
 remove                                  - Remove the RAT from client
 
 quit                                    - Close server
+
+USE DOUBLE SPACE
 '''
 
 
@@ -211,7 +213,8 @@ def main():
     print(commands)
     while True:
         cmd = input(">>>")
-        cmd = cmd.split( )
+        cmd = cmd.split("  ")
+        print("Command: ", cmd)
         if cmd[0] == "help":
             print(commands)
         elif cmd[0] == "clients":

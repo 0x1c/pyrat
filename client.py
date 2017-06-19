@@ -275,7 +275,7 @@ def main():
         msg = decrypt(key, msg)
         print(msg)
         msg = msg.decode()
-        msg = msg.split( )
+        msg = msg.split("  ")
         print("order receive")
         print(msg)
         #execute orders
