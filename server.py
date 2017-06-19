@@ -3,6 +3,7 @@
 ###Imports###
 import socket
 import threading
+import os
 
 #encryption
 from Crypto import Random
